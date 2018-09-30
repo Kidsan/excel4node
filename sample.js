@@ -46,6 +46,8 @@ function generateWorkbook() {
         numberFormat: '$##0.00; [Red]($##0.00); $0.00'
     });
 
+    var commentWS = wb.addWorksheet('comments')
+    commentWS.cell(1, 1).comment('My Simple Comment');
     var invoiceWS = wb.addWorksheet('Invoice', {
         pageSetup: {
             fitToWidth: 1

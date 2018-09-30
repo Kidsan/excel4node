@@ -31,6 +31,12 @@ let addRootContentTypesXML = (promiseObj) => {
           }
         });
       }
+      if (Object.keys(s.comments).length > 0) {
+        if (extensionsAdded.indexOf('vml') < 0) {
+          xml.ele('Default').att('Extension', 'vml').att('ContentType', 'application/vnd.openxmlformats-officedocument.vmlDrawing');
+          extensionsAdded.push('vml');
+        }
+      }
     });
     xml.ele('Default').att('ContentType', 'application/xml').att('Extension', 'xml');
     xml.ele('Default').att('ContentType', 'application/vnd.openxmlformats-package.relationships+xml').att('Extension', 'rels');
@@ -44,6 +50,11 @@ let addRootContentTypesXML = (promiseObj) => {
         xml.ele('Override')
           .att('ContentType', 'application/vnd.openxmlformats-officedocument.drawing+xml')
           .att('PartName', '/xl/drawings/drawing' + s.sheetId + '.xml');
+      }
+      if (Object.keys(s.comments).length > 0) {
+        xml.ele('Override')
+          .att('ContentType', 'application/vnd.openxmlformats-officedocument.spreadsheetml.comments+xml')
+          .att('PartName', '/xl/comments' + s.sheetId + '.xml');
       }
     });
     xml.ele('Override').att('ContentType', 'application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml').att('PartName', '/xl/styles.xml');
@@ -142,6 +153,9 @@ let addWorkbookXML = (promiseObj) => {
       }
       if (viewOpts.yWindow) {
         workbookViewEle.att('yWindow', viewOpts.yWindow);
+      }
+      if (viewOpts.showComments) {
+        workbookViewEle.att('showComments', viewOpts.showComments);
       }
     }
 
@@ -246,6 +260,28 @@ let addWorksheetsXML = (promiseObj) => {
             return new Promise((resolve) => {
               if (xml) {
                 promiseObj.xlsx.folder('xl').folder('worksheets').folder('_rels').file(`sheet${curSheet}.xml.rels`, xml);
+              }
+              resolve();
+            });
+          })
+          .then(() => {
+            return thisSheet.generateCommentsXML();
+          })
+          .then((xml) => {
+            return new Promise((resolve) => {
+              if (xml) {
+                promiseObj.xlsx.folder('xl').file(`comments${curSheet}.xml`, xml);
+              }
+              resolve();
+            });
+          })
+          .then(() => {
+            return thisSheet.generateCommentsVmlXML();
+          })
+          .then((xml) => {
+            return new Promise((resolve) => {
+              if (xml) {
+                promiseObj.xlsx.folder('xl').folder('drawings').file(`commentsVml${curSheet}.vml`, xml);
               }
               resolve();
             });
